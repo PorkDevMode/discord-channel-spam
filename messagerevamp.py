@@ -5,7 +5,11 @@ import asyncio
 import os
 
 def get_user_input(existing_settings):
-    settings = existing_settings.copy()
+    
+    if not isinstance(existing_settings, dict):
+        settings = {}
+    else:
+        settings = existing_settings.copy()
 
     if "tokens" not in settings:
         settings["tokens"] = input("Enter Discord tokens (separated by comma for multiple accounts): ").split(",")
