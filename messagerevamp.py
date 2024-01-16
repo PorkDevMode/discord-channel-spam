@@ -3,6 +3,9 @@ import json
 import random
 import asyncio
 import os
+import datetime
+from colorama import init, Fore
+
 
 def get_user_input(existing_settings):
     
@@ -41,6 +44,8 @@ settings = get_user_input(settings)
 with open("message.txt", "r") as file:
     message_content = file.read()
 
+init(autoreset=True)
+
 class MyClient(discord.Client):
     async def on_ready(self):
         print('Logged on as', self.user)
@@ -52,19 +57,31 @@ class MyClient(discord.Client):
                 channel = self.get_channel(channel_id)
                 if channel:
                     try:
+                        
+                        with open("message.txt", "r") as file:
+                            message_content = file.read()
+                        
                         await channel.send(message_content)
-                        random_delay = random.randint(1, settings["random_delay"])
-                        await asyncio.sleep(settings["cooldown"] + random_delay)
+                        now = datetime.datetime.now()
+                        
+                        print(f"{Fore.GREEN}[{now.strftime('%Y-%m-%d %H:%M:%S')}] {Fore.BLUE}Message sent to channel {channel_id}:\n{message_content}\n")
+                        
                     except discord.HTTPException as e:
                         if e.status == 429:
                             retry_after = e.response.headers.get('Retry-After')
                             if retry_after:
+                                print(f"{Fore.RED}Cooldown! Retrying in: {retry_after}")
                                 await asyncio.sleep(float(retry_after))
                                 await channel.send(message_content)
                         else:
-                            print(f"Error sending message: {e}")
+                            print(f"{Fore.RED}Error sending message: {e}")
                     except Exception as e:
-                        print(f"An error occurred: {e}")
+                        print(f"{Fore.RED}An error occurred: {e}")
+
+            
+            random_delay = random.randint(1, settings["random_delay"])
+            print(f"{Fore.LIGHTYELLOW_EX}Next message in: {settings['cooldown']} seconds")
+            await asyncio.sleep(settings["cooldown"] + random_delay)
 
 async def run_client(token):
     client = MyClient()
